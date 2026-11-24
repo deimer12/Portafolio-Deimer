@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deimer Martínez | Portafolio — Ingeniería, Sistemas & Logística</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Anton / Oswald (Display), Inter (Body), JetBrains Mono (Tech) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome para iconos limpios -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bgDeep: '#08080a',
+            bgCard: '#111115',
+            bgCardHover: '#17171d',
+            borderSubtle: '#222228',
+            accentRed: '#ff3b1d',
+            accentRedDark: '#c9230b',
+            wireBlue: '#3b82f6',
+          },
+          fontFamily: {
+            display: ['Oswald', 'Anton', 'sans-serif'],
+            anton: ['Anton', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg-deep: #08080a;
+      --accent-red: #ff3b1d;
+      --wire-blue: #3b82f6;
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      color: #f4f4f6;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Cuadrícula técnica sutil en el fondo estilo Figma Canvas */
+    .canvas-grid {
+      background-size: 36px 36px;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    }
+
+    /* Estados de animación de construcción estilo Figma Wireframe */
+    .build-block {
+      position: relative;
+      transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+    }
+
+    .build-block .block-content {
+      transition: opacity 0.45s ease, filter 0.45s ease, clip-path 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Estado 0: Oculto antes de que lleguen los agentes */
+    .build-block.state-hidden .block-content {
+      opacity: 0;
+      filter: blur(4px);
+    }
+
+    /* Estado 1: Wireframe azul seleccionado (como en el video) */
+    .build-block.state-wireframe {
+      outline: 1.5px solid #3b82f6;
+      background-color: rgba(59, 130, 246, 0.04);
+      border-radius: 6px;
+    }
+
+    .build-block.state-wireframe .block-content {
+      opacity: 0.14;
+      filter: grayscale(100%);
+    }
+
+    /* Tiradores de las esquinas del wireframe azul */
+    .wire-overlay {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .build-block.state-wireframe .wire-overlay {
+      opacity: 1;
+    }
+
+    .wire-handle {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      background: #08080a;
+      border: 1.5px solid #3b82f6;
+    }
+    .wire-handle.tl { top: -4px; left: -4px; }
+    .wire-handle.tr { top: -4px; right: -4px; }
+    .wire-handle.bl { bottom: -4px; left: -4px; }
+    .wire-handle.br { bottom: -4px; right: -4px; }
+
+    .wire-tag {
+      position: absolute;
+      top: -20px;
+      left: -1px;
+      background: #3b82f6;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px 3px 0 0;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Estado 2: Construido / Revelado */
+    .build-block.state-built .block-content {
+      opacity: 1;
+      filter: none;
+    }
+
+    /* Cursores de agentes multiplayer */
+    .agent-cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+      pointer-events: none;
+      will-change: transform, opacity;
+      transition: opacity 0.35s ease;
+    }
+
+    .agent-badge {
+      margin-left: 12px;
+      margin-top: -4px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Efecto de pulso en el núcleo central inicial */
+    @keyframes pulseCore {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 59, 29, 0.7); }
+      50% { transform: scale(1.12); box-shadow: 0 0 28px 10px rgba(255, 59, 29, 0.25); }
+    }
+    .core-heart {
+      animation: pulseCore 1.4s infinite ease-in-out;
+    }
+
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #08080a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #272730;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff3b1d;
+    }
+  </style>
+</head>
+<body class="canvas-grid antialiased selection:bg-accentRed selection:text-white">
+
+  <!-- CONTENEDOR DE CURSORES DE AGENTES (FIGMA MULTIPLAYER) -->
+  <div id="agents-layer" aria-hidden="true"></div>
+
+  <!-- NÚCLEO CENTRAL INICIAL (CORAZÓN / NODO ROJO DE ORIGEN COMO EN EL VIDEO) -->
+  <div id="origin-core" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bgDeep/90 backdrop-blur-sm transition-opacity duration-500 pointer-events-none">
+    <div class="core-heart w-12 h-12 rounded-2xl bg-accentRed/20 border border-accentRed flex items-center justify-center text-accentRed text-xl mb-3">
+      <i class="fa-solid fa-microchip"></i>
+    </div>
+    <p class="font-mono text-xs tracking-widest uppercase text-zinc-400">
+      Desplegando agentes de interfaz...
+    </p>
+  </div>
+
+  <!-- NAVBAR SUPERIOR FIJA -->
+  <header class="fixed top-0 inset-x-0 z-40 bg-bgDeep/85 backdrop-blur-md border-b border-borderSubtle">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo DM -->
+      <a href="#inicio" class="flex items-center gap-3 group">
+        <div class="w-9 h-9 rounded-lg bg-accentRed flex items-center justify-center font-anton text-lg tracking-wider text-white shadow-lg shadow-accentRed/25 group-hover:scale-105 transition-transform">
+          DM
+        </div>
+        <div class="leading-tight">
+          <span class="font-display font-bold tracking-wider text-base uppercase text-white block">DEIMER MARTÍNEZ</span>
+          <span class="font-mono text-[10px] text-zinc-400 uppercase tracking-widest block">Sistemas &amp; Logística</span>
+        </div>
+      </a>
+
+      <!-- Enlaces de navegación -->
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-zinc-400">
+        <a href="#proyectos" class="hover:text-white transition-colors">Proyectos</a>
+        <a href="#formacion" class="hover:text-white transition-colors">Formación &amp; Hoja de Ruta</a>
+        <a href="#trayectoria" class="hover:text-white transition-colors">Trayectoria</a>
+        <a href="#contacto" class="hover:text-white transition-colors">Contacto</a>
+      </nav>
+
+      <!-- Acciones rápidas -->
+      <div class="flex items-center gap-2.5">
+        <button onclick="triggerBuildSequence(true)" title="Volver a ver la animación de agentes construyendo la página"
+          class="px-3 py-1.5 rounded-lg border border-wireBlue/40 bg-wireBlue/10 hover:bg-wireBlue/20 text-wireBlue font-mono text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span class="hidden sm:inline">Reconstruir UI</span>
+        </button>
+
+        <a href="#contacto"
+          class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-bgCard border border-borderSubtle hover:border-accentRed/60 text-xs font-mono text-zinc-200 transition-colors">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Disponible
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="pt-20 pb-28">
+
+    <!-- =========================================================
+         SECCIÓN 1: HERO ("PORTAFOLIO" GIGANTE COMO EN EL VIDEO)
+         ========================================================= -->
+    <section id="inicio" class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 lg:pt-14 lg:pb-24">
+      
+      <!-- Texto gigante de fondo estilo video ("PORTAFOLIO") -->
+      <div class="build-block pointer-events-none select-none overflow-hidden mb-2 lg:-mb-12" data-component="HeroBackdropTitle" data-delay="120">
+        <div class="wire-overlay"><span class="wire-tag">HeroBackdropTitle • 1280×210</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+        <div class="block-content text-center">
+          <h2 class="font-anton text-[19vw] lg:text-[185px] leading-[0.85] tracking-tight uppercase text-accentRed/90">
+            PORTAFOLIO
+          </h2>
+        </div>
+      </div>
+
+      <!-- Grid principal del Hero (3 columnas en desktop como en el video) -->
+      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <!-- Columna Izquierda: Presentación -->
+        <div class="lg:col-span-5 build-block p-5 sm:p-6 rounded-2xl bg-bgCard/90 border border-borderSubtle backdrop-blur-md" data-component="HeroIntroCard" data-delay="240">
+          <div class="wire-overlay"><span class="wire-tag">HeroIntroCard • AutoLayout</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-accentRed/15 border border-accentRed/30 text-accentRed font-mono text-[11px] font-semibold uppercase tracking-wider mb-4">
+              <i class="fa-solid fa-terminal"></i>
+              Ingeniería en Informática • Logística &amp; Sistemas
+            </div>
+
+            <p class="font-mono text-sm text-zinc-400 mb-1">Hola, soy</p>
+            <h1 class="font-display text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white leading-none mb-3">
+              DEIMER MARTÍNEZ
+            </h1>
+            <p class="font-mono text-xs uppercase tracking-wider text-accentRed font-semibold mb-4">
+              Supervisor de Almacén e Inventarios &amp; Desarrollador de Sistemas
+            </p>
+
+            <p class="text-zinc-300 text-sm sm:text-base leading-relaxed mb-6">
+              Combino más de <strong class="text-white">6 años de liderazgo operativo y control de inventarios</strong> con desarrollo web y automatización de procesos para construir sistemas reales que optimizan la operación diaria.
+            </p>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <a href="#proyectos" class="px-5 py-3 rounded-xl bg-accentRed hover:bg-accentRedDark text-white font-semibold text-sm flex items-center gap-2 shadow-lg shadow-accentRed/25 transition-all">
+                <span>Ver proyectos</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+              </a>
+              <a href="#contacto" class="px-5 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-borderSubtle text-zinc-200 font-semibold text-sm transition-all">
+                Contactar
+              </a>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-borderSubtle flex items-center justify-between text-xs font-mono text-zinc-500">
+              <span><i class="fa-solid fa-location-dot text-accentRed mr-1.5"></i>Caracas, Venezuela</span>
+              <span>UPTEC "Mariscal Sucre"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Central: Retrato / Avatar Técnico Estilizado -->
+        <div class="lg:col-span-4 build-block flex justify-center" data-component="ProfileVisualFrame" data-delay="340">
+          <div class="wire-overlay"><span class="wire-tag">ProfileVisualFrame • 380×440</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content relative w-full max-w-[360px] rounded-2xl overflow-hidden border border-borderSubtle bg-gradient-to-b from-zinc-900 via-bgCard to-bgDeep p-6 shadow-2xl">
+            <!-- Resplandor rojo detrás del avatar -->
+            <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-64 bg-accentRed/25 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <!-- SVG Ilustración / Avatar Profesional Moderno (Editable para poner tu foto) -->
+            <div class="relative z-10 flex flex-col items-center">
+              <div class="w-44 h-44 sm:w-48 sm:h-48 rounded-2xl bg-zinc-950/90 border border-accentRed/40 flex items-center justify-center relative overflow-hidden shadow-inner mb-5">
+                <svg viewBox="0 0 200 200" class="w-full h-full">
+                  <defs>
+                    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#18181f" />
+                      <stop offset="100%" stop-color="#09090b" />
+                    </linearGradient>
+                    <linearGradient id="redAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#ff3b1d" />
+                      <stop offset="100%" stop-color="#991b1b" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="200" height="200" fill="url(#bgGrad)" />
+                  <!-- Círculos técnicos -->
+                  <circle cx="100" cy="100" r="78" fill="none" stroke="#ff3b1d" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="4 4" />
+                  <circle cx="100" cy="100" r="62" fill="none" stroke="#3b82f6" stroke-opacity="0.25" stroke-width="1" />
+                  <!-- Silueta estilizada -->
+                  <path d="M45 185 C45 145, 155 145, 155 185 Z" fill="#1f1f27" stroke="#ff3b1d" stroke-width="1.5" />
+                  <circle cx="100" cy="86" r="34" fill="#272732" stroke="#ff3b1d" stroke-width="1.5" />
+                  <!-- Detalle visor / gafas tech -->
+                  <rect x="74" y="78" width="22" height="12" rx="3" fill="#09090b" stroke="#ff3b1d" stroke-width="1.5" />
+                  <rect x="104" y="78" width="22" height="12" rx="3" fill="#09090b" stroke="#ff3b1d" stroke-width="1.5" />
+                  <line x1="96" y1="84" x2="104" y2="84" stroke="#ff3b1d" stroke-width="1.5" />
+                  <!-- Monograma -->
+                  <text x="100" y="172" text-anchor="middle" fill="#ffffff" font-family="Oswald, sans-serif" font-weight="700" font-size="16" letter-spacing="2">DEIMER.DEV</text>
+                </svg>
+                <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-accentRed text-[10px] font-mono font-bold text-white">
+                  27 AÑOS
+                </span>
+              </div>
+
+              <div class="w-full space-y-2 text-left bg-zinc-950/70 p-3.5 rounded-xl border border-borderSubtle">
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="text-zinc-400">Grado TSU:</span>
+                  <span class="text-emerald-400 font-semibold">Informática (Culminado)</span>
+                </div>
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="text-zinc-400">Ingeniería:</span>
+                  <span class="text-white font-semibold">4to Trayecto • 8vo Trim.</span>
+                </div>
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="text-zinc-400">Rol Actual:</span>
+                  <span class="text-accentRed font-semibold">Supervisor Almacén (IVOO)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Métricas de Impacto (Estilo números rojos del video) -->
+        <div class="lg:col-span-3 build-block p-5 sm:p-6 rounded-2xl bg-bgCard/90 border border-borderSubtle" data-component="MetricsPanel" data-delay="440">
+          <div class="wire-overlay"><span class="wire-tag">MetricsPanel • KPI_Grid</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content space-y-5">
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-400 uppercase tracking-wider pb-2 border-b border-borderSubtle">
+              <span class="w-2 h-2 rounded-full bg-accentRed"></span>
+              Indicadores Clave
+            </div>
+
+            <div>
+              <div class="font-anton text-4xl sm:text-5xl text-accentRed leading-none">+6</div>
+              <div class="text-xs font-mono text-zinc-300 uppercase mt-1">Años de experiencia operativa y logística</div>
+            </div>
+
+            <div>
+              <div class="font-anton text-4xl sm:text-5xl text-white leading-none">05</div>
+              <div class="text-xs font-mono text-zinc-300 uppercase mt-1">Sistemas desarrollados e implementados</div>
+            </div>
+
+            <div>
+              <div class="font-anton text-4xl sm:text-5xl text-accentRed leading-none">98%+</div>
+              <div class="text-xs font-mono text-zinc-300 uppercase mt-1">Exactitud en auditoría e inventarios cíclicos</div>
+            </div>
+
+            <div>
+              <div class="font-anton text-4xl sm:text-5xl text-white leading-none">03</div>
+              <div class="text-xs font-mono text-zinc-300 uppercase mt-1">Nuevos sistemas en hoja de ruta</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SECCIÓN 2: PROYECTOS ("SISTEMAS QUE TRABAJAN")
+         ========================================================= -->
+    <section id="proyectos" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-borderSubtle">
+      
+      <!-- Encabezado y Pestañas de Filtro -->
+      <div class="build-block mb-10" data-component="ProjectsHeader" data-delay="180">
+        <div class="wire-overlay"><span class="wire-tag">ProjectsHeader • FilterTabs</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+        <div class="block-content flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div>
+            <span class="font-mono text-xs uppercase tracking-widest text-accentRed block mb-2">// Portafolio de Desarrollo</span>
+            <h2 class="font-display text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white">
+              SISTEMAS QUE TRABAJAN.
+            </h2>
+          </div>
+
+          <!-- Filtros funcionales estilo video -->
+          <div class="flex flex-wrap gap-2" id="project-filters">
+            <button data-filter="all" class="filter-btn active px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider bg-accentRed text-white font-semibold transition-all cursor-pointer">
+              Todos (5)
+            </button>
+            <button data-filter="web" class="filter-btn px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider bg-bgCard border border-borderSubtle text-zinc-400 hover:text-white transition-all cursor-pointer">
+              Desarrollo Web (PHP/SQL)
+            </button>
+            <button data-filter="appscript" class="filter-btn px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider bg-bgCard border border-borderSubtle text-zinc-400 hover:text-white transition-all cursor-pointer">
+              Google Apps Script
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid de Tarjetas de Proyectos (01 a 05) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="projects-grid">
+        
+        <!-- PROYECTO 01: SICFI -->
+        <article class="project-card build-block group rounded-2xl bg-bgCard border border-borderSubtle hover:border-accentRed/60 overflow-hidden flex flex-col justify-between transition-all" data-category="web" data-component="ProjectCard_01_SICFI" data-delay="220">
+          <div class="wire-overlay"><span class="wire-tag">ProjectCard_01 • SICFI</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content flex flex-col h-full">
+            <!-- Mockup UI Simulado -->
+            <div class="p-4 bg-zinc-950 border-b border-borderSubtle">
+              <div class="rounded-xl bg-[#0c1118] border border-cyan-900/40 p-3.5 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 font-bold text-xs">S</span>
+                    <div>
+                      <div class="font-display font-bold text-sm tracking-wide text-white leading-none">SICFI</div>
+                      <div class="text-[9px] font-mono text-cyan-400">Facturación e Inventario</div>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono text-[9px]">PostgreSQL</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">VENTAS</div>
+                    <div class="text-xs font-bold text-white">POS Ágil</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">STOCK</div>
+                    <div class="text-xs font-bold text-cyan-400">Tiempo Real</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">ENFOQUE</div>
+                    <div class="text-xs font-bold text-white">PyMEs</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info del Proyecto -->
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex items-baseline gap-3 mb-2">
+                  <span class="font-anton text-2xl text-accentRed">01</span>
+                  <h3 class="font-display text-xl font-bold uppercase text-white tracking-wide">SICFI — Control de Facturación e Inventario</h3>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 uppercase mb-3">Proyecto Personal • Solución Comercial para Microempresarios</p>
+                <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+                  Sistema integrado diseñado para microempresarios y comercios que requieren controlar facturación, entradas/salidas de mercancía y reportes de inventario de forma rápida y segura.
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-borderSubtle flex flex-wrap gap-1.5">
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">PHP</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">PostgreSQL</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">JavaScript / AJAX</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">HTML5 / CSS3</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Laragon</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- PROYECTO 02: SIGEFICON -->
+        <article class="project-card build-block group rounded-2xl bg-bgCard border border-borderSubtle hover:border-accentRed/60 overflow-hidden flex flex-col justify-between transition-all" data-category="web" data-component="ProjectCard_02_SIGEFICON" data-delay="280">
+          <div class="wire-overlay"><span class="wire-tag">ProjectCard_02 • SIGEFICON</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content flex flex-col h-full">
+            <!-- Mockup UI Simulado -->
+            <div class="p-4 bg-zinc-950 border-b border-borderSubtle">
+              <div class="rounded-xl bg-[#0a101d] border border-blue-900/40 p-3.5 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-blue-400 font-bold text-xs"><i class="fa-solid fa-building"></i></span>
+                    <div>
+                      <div class="font-display font-bold text-sm tracking-wide text-white leading-none">SIGEFICON</div>
+                      <div class="text-[9px] font-mono text-orange-400">Residencias Villaflores</div>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 font-mono text-[9px]">MariaDB</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">CUOTAS</div>
+                    <div class="text-xs font-bold text-white">Alícuotas</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">FINANZAS</div>
+                    <div class="text-xs font-bold text-orange-400">Balances</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">GRADO</div>
+                    <div class="text-xs font-bold text-white">TSU UPTEC</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info del Proyecto -->
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex items-baseline gap-3 mb-2">
+                  <span class="font-anton text-2xl text-accentRed">02</span>
+                  <h3 class="font-display text-xl font-bold uppercase text-white tracking-wide">SIGEFICON — Gestión de Finanzas para Condominios</h3>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 uppercase mb-3">Proyecto Universitario de Grado TSU • Residencias Villaflores</p>
+                <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+                  Plataforma web para la administración financiera de condominios: cálculo automatizado de recibos, control de pagos, fondos de reserva y transparencia contable para propietarios.
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-borderSubtle flex flex-wrap gap-1.5">
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">PHP</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">MariaDB</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">JS / JScript / AJAX</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">HTML / CSS</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">XAMPP</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- PROYECTO 03: SISTEMA_CONTROL_IVOO -->
+        <article class="project-card build-block group rounded-2xl bg-bgCard border border-borderSubtle hover:border-accentRed/60 overflow-hidden flex flex-col justify-between transition-all" data-category="appscript" data-component="ProjectCard_03_IVOO" data-delay="340">
+          <div class="wire-overlay"><span class="wire-tag">ProjectCard_03 • CONTROL_IVOO</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content flex flex-col h-full">
+            <!-- Mockup UI Simulado -->
+            <div class="p-4 bg-zinc-950 border-b border-borderSubtle">
+              <div class="rounded-xl bg-[#12100c] border border-amber-900/40 p-3.5 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 font-bold text-xs"><i class="fa-solid fa-boxes-stacked"></i></span>
+                    <div>
+                      <div class="font-display font-bold text-sm tracking-wide text-white leading-none">CONTROL_IVOO</div>
+                      <div class="text-[9px] font-mono text-amber-400">Almacén e Inventario</div>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono text-[9px]">Apps Script</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">PRECISIÓN</div>
+                    <div class="text-xs font-bold text-emerald-400">&gt;98.5%</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">CÍCLICOS</div>
+                    <div class="text-xs font-bold text-white">Diarios</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">NUBE</div>
+                    <div class="text-xs font-bold text-amber-400">Workspace</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info del Proyecto -->
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex items-baseline gap-3 mb-2">
+                  <span class="font-anton text-2xl text-accentRed">03</span>
+                  <h3 class="font-display text-xl font-bold uppercase text-white tracking-wide">SISTEMA_CONTROL_IVOO</h3>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 uppercase mb-3">Control Interno • Operaciones de Almacén e Inventarios</p>
+                <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+                  Herramienta interna desarrollada sobre Google Apps Script para auditar movimientos de mercancía de alto valor, recepción, picking/packing y conciliación teórica-física en tiempo real.
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-borderSubtle flex flex-wrap gap-1.5">
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Google Apps Script</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Google Sheets DB</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">HTML Service</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- PROYECTO 04: GTH IVOO -->
+        <article class="project-card build-block group rounded-2xl bg-bgCard border border-borderSubtle hover:border-accentRed/60 overflow-hidden flex flex-col justify-between transition-all" data-category="appscript" data-component="ProjectCard_04_GTH" data-delay="400">
+          <div class="wire-overlay"><span class="wire-tag">ProjectCard_04 • GTH_IVOO</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content flex flex-col h-full">
+            <!-- Mockup UI Simulado -->
+            <div class="p-4 bg-zinc-950 border-b border-borderSubtle">
+              <div class="rounded-xl bg-[#130d14] border border-purple-900/40 p-3.5 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-400 font-bold text-xs"><i class="fa-solid fa-users-gear"></i></span>
+                    <div>
+                      <div class="font-display font-bold text-sm tracking-wide text-white leading-none">GTH — IVOO</div>
+                      <div class="text-[9px] font-mono text-purple-400">Gestión del Talento Humano</div>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 font-mono text-[9px]">Control Interno</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">PERSONAL</div>
+                    <div class="text-xs font-bold text-white">Expedientes</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">ASISTENCIA</div>
+                    <div class="text-xs font-bold text-purple-400">Reportes</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">FLUJO</div>
+                    <div class="text-xs font-bold text-white">Digital</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info del Proyecto -->
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex items-baseline gap-3 mb-2">
+                  <span class="font-anton text-2xl text-accentRed">04</span>
+                  <h3 class="font-display text-xl font-bold uppercase text-white tracking-wide">Sistema de Gestión Humana (GTH) — IVOO</h3>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 uppercase mb-3">Control Interno • Administración de Personal</p>
+                <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+                  Aplicación interna creada en Google Apps Script para centralizar el control administrativo del talento humano, registro de novedades, asistencia y seguimiento operativo.
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-borderSubtle flex flex-wrap gap-1.5">
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Google Apps Script</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Google Workspace</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Automatización</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- PROYECTO 05: GALLETAS OSO -->
+        <article class="project-card build-block group rounded-2xl bg-bgCard border border-borderSubtle hover:border-accentRed/60 overflow-hidden flex flex-col justify-between transition-all md:col-span-2 lg:col-span-1" data-category="appscript" data-component="ProjectCard_05_GalletasOso" data-delay="460">
+          <div class="wire-overlay"><span class="wire-tag">ProjectCard_05 • GalletasOso</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content flex flex-col h-full">
+            <!-- Mockup UI Simulado -->
+            <div class="p-4 bg-zinc-950 border-b border-borderSubtle">
+              <div class="rounded-xl bg-[#160f0d] border border-accentRed/40 p-3.5 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded bg-accentRed/20 border border-accentRed/50 flex items-center justify-center text-accentRed font-bold text-xs"><i class="fa-solid fa-store"></i></span>
+                    <div>
+                      <div class="font-display font-bold text-sm tracking-wide text-white leading-none">GALLETAS OSO</div>
+                      <div class="text-[9px] font-mono text-accentRed">Catálogo &amp; Pedidos</div>
+                    </div>
+                  </div>
+                  <span class="px-2 py-0.5 rounded bg-accentRed/15 text-accentRed font-mono text-[9px]">Ventas Web</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">CATÁLOGO</div>
+                    <div class="text-xs font-bold text-white">Interactivo</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">PEDIDOS</div>
+                    <div class="text-xs font-bold text-accentRed">Automáticos</div>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-900/90 border border-zinc-800">
+                    <div class="text-[9px] text-zinc-500 font-mono">ADMIN</div>
+                    <div class="text-xs font-bold text-white">Panel</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info del Proyecto -->
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <div class="flex items-baseline gap-3 mb-2">
+                  <span class="font-anton text-2xl text-accentRed">05</span>
+                  <h3 class="font-display text-xl font-bold uppercase text-white tracking-wide">Galletas Oso — Catálogo de Ventas y Pedidos</h3>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 uppercase mb-3">Comercio Digital • Administración de Ventas</p>
+                <p class="text-sm text-zinc-300 leading-relaxed mb-4">
+                  Sistema de ventas con catálogo digital interactivo para clientes y panel administrativo para recepción, validación y despacho de pedidos desarrollado con Google Apps Script.
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-borderSubtle flex flex-wrap gap-1.5">
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Google Apps Script</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Catálogo Web</span>
+                <span class="px-2 py-1 rounded bg-zinc-900 text-[11px] font-mono text-zinc-300">Control de Pedidos</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- Barra de Herramientas y Tecnologías (Estilo iconos del video) -->
+      <div class="build-block mt-10 p-5 rounded-2xl bg-bgCard/70 border border-borderSubtle" data-component="TechStackRibbon" data-delay="520">
+        <div class="wire-overlay"><span class="wire-tag">TechStackRibbon • Tools</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+        <div class="block-content flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <span class="font-mono text-[11px] uppercase tracking-widest text-zinc-400 shrink-0">
+            Stack Técnico &amp; Software:
+          </span>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-3 py-1.5 rounded-lg bg-zinc-900 border border-borderSubtle text-xs font-mono text-zinc-200"><i class="fa-brands fa-php text-indigo-400 mr-1.5"></i>PHP</span>
+            <span class="px-3 py-1.5 rounded-lg bg-zinc-900 border border-borderSubtle text-xs font-mono text-zinc-200"><i class="fa-solid fa-database text-cyan-400 mr-1.5"></i>PostgreSQL</span>
+            <span class="px-3 py-1.5 rounded-lg bg-zinc-900 border border-borderSubtle text-xs font-mono text-zinc-200"><i class="fa-solid fa-server text-amber-400 mr-1.5"></i>MariaDB</span>
+            <span class="px-3 py-1.5 rounded-lg bg-zinc-900 border border-borderSubtle text-xs font-mono text-zinc-200"><i class="fa-brands fa-js text-yellow-400 mr-1.5"></i>JS / AJAX</span>
+            <span class="px-3 py-1.5 rounded-lg bg-zinc-900 border border-borderSubtle text-xs font-mono text-zinc-200"><i class="fa-brands fa-google text-emerald-400 mr-1.5"></i>Apps Script</span>
+            <span class="px-3 py-1.5 rounded-lg bg-zinc-900 border border-borderSubtle text-xs font-mono text-zinc-200"><i class="fa-solid fa-file-excel text-green-500 mr-1.5"></i>Excel Avanzado</span>
+            <span class="px-3 py-1.5 rounded-lg bg-zinc-900 border border-borderSubtle text-xs font-mono text-zinc-200"><i class="fa-solid fa-cubes text-accentRed mr-1.5"></i>ERP Valery / Stellar</span>
+            <span class="px-3 py-1.5 rounded-lg bg-zinc-900 border border-borderSubtle text-xs font-mono text-zinc-200"><i class="fa-brands fa-linux text-zinc-300 mr-1.5"></i>Windows / Linux</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SECCIÓN 3: "MÁS QUE CÓDIGO. SISTEMAS QUE TRABAJAN." (3 COLUMNAS COMO EN EL VIDEO)
+         ========================================================= -->
+    <section id="formacion" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-borderSubtle">
+      
+      <div class="build-block mb-10" data-component="AboutHeader" data-delay="180">
+        <div class="wire-overlay"><span class="wire-tag">AboutHeader • Formation&amp;Roadmap</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+        <div class="block-content flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div>
+            <span class="font-mono text-xs uppercase tracking-widest text-accentRed block mb-2">// Formación, Cursos &amp; Próximos Pasos</span>
+            <h2 class="font-display text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white leading-none">
+              MÁS QUE CÓDIGO.<br/>SISTEMAS Y OPERACIONES.
+            </h2>
+          </div>
+          <p class="text-sm text-zinc-400 max-w-md">
+            Preparación académica universitaria en informática respaldada por años de ejecución real en cadenas de suministro y control administrativo.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3 Columnas idénticas a la estructura del video (00:28) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Columna 1: Formación Académica & Cursos -->
+        <div class="lg:col-span-4 build-block p-6 rounded-2xl bg-bgCard border border-borderSubtle" data-component="EducationColumn" data-delay="260">
+          <div class="wire-overlay"><span class="wire-tag">EducationColumn • Academic</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content">
+            <h3 class="font-mono text-xs uppercase tracking-widest text-zinc-400 mb-5 pb-2 border-b border-borderSubtle">
+              Formación Académica
+            </h3>
+
+            <div class="space-y-5 mb-7">
+              <div class="relative pl-4 border-l-2 border-accentRed">
+                <span class="font-mono text-[11px] text-accentRed font-semibold">EN CURSO • 4TO TRAYECTO (8VO TRIMESTRE)</span>
+                <h4 class="font-display text-lg font-bold uppercase text-white mt-0.5">Ingeniería en Informática</h4>
+                <p class="text-xs text-zinc-400 mt-1">Universidad Politécnica Territorial de Caracas "Mariscal Sucre"</p>
+              </div>
+
+              <div class="relative pl-4 border-l-2 border-zinc-600">
+                <span class="font-mono text-[11px] text-emerald-400 font-semibold">CULMINADO (EN ESPERA DE TÍTULO)</span>
+                <h4 class="font-display text-lg font-bold uppercase text-white mt-0.5">TSU en Informática</h4>
+                <p class="text-xs text-zinc-400 mt-1">Universidad Politécnica Territorial de Caracas "Mariscal Sucre"</p>
+              </div>
+            </div>
+
+            <h3 class="font-mono text-xs uppercase tracking-widest text-zinc-400 mb-4 pb-2 border-b border-borderSubtle">
+              Cursos y Capacitación
+            </h3>
+            <ul class="space-y-3 text-sm">
+              <li class="flex items-center justify-between p-2.5 rounded-lg bg-zinc-900/80 border border-borderSubtle">
+                <span class="text-zinc-200 font-medium"><i class="fa-solid fa-certificate text-accentRed mr-2"></i>Analista Administrativo</span>
+                <span class="font-mono text-xs text-zinc-400">2017</span>
+              </li>
+              <li class="flex items-center justify-between p-2.5 rounded-lg bg-zinc-900/80 border border-borderSubtle">
+                <span class="text-zinc-200 font-medium"><i class="fa-solid fa-scale-balanced text-accentRed mr-2"></i>Legislación Laboral</span>
+                <span class="font-mono text-xs text-zinc-400">2016</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Columna 2: Próximos Proyectos / Hoja de Ruta (Numerados 01 - 03 como en el video) -->
+        <div class="lg:col-span-5 build-block p-6 rounded-2xl bg-bgCard border border-borderSubtle" data-component="RoadmapColumn" data-delay="340">
+          <div class="wire-overlay"><span class="wire-tag">RoadmapColumn • NextBuilds</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content">
+            <h3 class="font-mono text-xs uppercase tracking-widest text-zinc-400 mb-5 pb-2 border-b border-borderSubtle">
+              Próximos Proyectos (Hoja de Ruta)
+            </h3>
+
+            <div class="space-y-5">
+              <!-- 01 -->
+              <div class="flex gap-4 items-start">
+                <span class="font-anton text-2xl text-accentRed leading-none pt-0.5">01</span>
+                <div>
+                  <h4 class="font-display text-lg font-bold uppercase text-white tracking-wide">
+                    Brújula Tours Vzla — Sistema de Viajes y Turismo
+                  </h4>
+                  <p class="text-xs text-zinc-400 leading-relaxed mt-1">
+                    Plataforma integral de reservas, paquetes turísticos, control de itinerarios y gestión administrativa diseñada para mi agencia de viajes <strong class="text-zinc-200">Brújula Tours Vzla</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <!-- 02 -->
+              <div class="flex gap-4 items-start pt-4 border-t border-borderSubtle/70">
+                <span class="font-anton text-2xl text-accentRed leading-none pt-0.5">02</span>
+                <div>
+                  <h4 class="font-display text-lg font-bold uppercase text-white tracking-wide">
+                    Control de Viajes — Transporte Escolar Privado
+                  </h4>
+                  <p class="text-xs text-zinc-400 leading-relaxed mt-1">
+                    Sistema de gestión de rutas escolares, control de abordaje de estudiantes, notificaciones a representantes y administración de unidades de transporte privado.
+                  </p>
+                </div>
+              </div>
+
+              <!-- 03 -->
+              <div class="flex gap-4 items-start pt-4 border-t border-borderSubtle/70">
+                <span class="font-anton text-2xl text-accentRed leading-none pt-0.5">03</span>
+                <div>
+                  <h4 class="font-display text-lg font-bold uppercase text-white tracking-wide">
+                    Control de Sala de Emergencias (Hospitales y Clínicas)
+                  </h4>
+                  <p class="text-xs text-zinc-400 leading-relaxed mt-1">
+                    Software clínico para admisión rápida de pacientes, clasificación de triaje, asignación de cubículos e insumos médicos en tiempo real.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna 3: Tarjeta Roja Destacada (Idéntica a la del video) -->
+        <div class="lg:col-span-3 build-block rounded-2xl bg-gradient-to-br from-accentRed to-accentRedDark p-6 sm:p-7 flex flex-col justify-between text-white shadow-2xl shadow-accentRed/20" data-component="ManifestoRedCard" data-delay="420">
+          <div class="wire-overlay"><span class="wire-tag">ManifestoCard • Highlight</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content flex flex-col justify-between h-full">
+            <div>
+              <div class="font-anton text-5xl opacity-40 leading-none mb-4">“</div>
+              <p class="font-display text-2xl sm:text-[26px] font-bold uppercase leading-snug tracking-tight">
+                Entender la operación desde el piso de almacén me permite programar sistemas que realmente resuelven problemas reales.
+              </p>
+            </div>
+
+            <div class="mt-8 pt-4 border-t border-white/25">
+              <div class="font-display text-xl font-bold uppercase tracking-wider">Deimer Martínez</div>
+              <div class="font-mono text-[11px] uppercase tracking-widest text-white/80 mt-0.5">
+                Informática • Logística • Automatización
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SECCIÓN 4: TRAYECTORIA LABORAL ("SIEMPRE CONSTRUYENDO.")
+         ========================================================= -->
+    <section id="trayectoria" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-borderSubtle">
+      
+      <div class="build-block mb-10" data-component="TimelineHeader" data-delay="180">
+        <div class="wire-overlay"><span class="wire-tag">TimelineHeader • Experience</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+        <div class="block-content">
+          <span class="font-mono text-xs uppercase tracking-widest text-accentRed block mb-2">// Experiencia Profesional (+6 Años)</span>
+          <h2 class="font-display text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white">
+            SIEMPRE CONSTRUYENDO. TRAYECTORIA.
+          </h2>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Línea de Tiempo Izquierda (8 cols) -->
+        <div class="lg:col-span-8 space-y-4">
+          
+          <!-- Cargo 1 -->
+          <div class="build-block p-5 rounded-2xl bg-bgCard border border-accentRed/40" data-component="Job_01_SupervisorIVOO" data-delay="220">
+            <div class="wire-overlay"><span class="wire-tag">Job_01 • CurrentRole</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+            <div class="block-content flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div class="sm:w-44 shrink-0">
+                <span class="inline-block px-2.5 py-1 rounded bg-accentRed/20 text-accentRed font-mono text-xs font-bold">
+                  05/2025 – ACTUALIDAD
+                </span>
+                <div class="font-mono text-xs text-zinc-400 mt-1.5">Caracas, Venezuela</div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-display text-xl font-bold uppercase text-white">Supervisor de Almacén y Logística</h3>
+                <div class="font-mono text-xs text-accentRed font-semibold mb-2">Simax, C.A. (IVOO)</div>
+                <ul class="text-sm text-zinc-300 space-y-1.5 list-disc list-inside">
+                  <li>Liderazgo directo del personal operativo en recepción, ubicación, picking, packing y despacho retail.</li>
+                  <li>Planificación de inventarios cíclicos y generales asegurando coincidencia teórica-física superior al <strong class="text-white">98%</strong>.</li>
+                  <li>Supervisión del flujo de datos en sistemas ERP y herramientas internas para mercancía tecnológica de alto valor.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cargo 2 -->
+          <div class="build-block p-5 rounded-2xl bg-bgCard border border-borderSubtle" data-component="Job_02_AnalistaIVOO" data-delay="270">
+            <div class="wire-overlay"><span class="wire-tag">Job_02 • InventoryAnalyst</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+            <div class="block-content flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div class="sm:w-44 shrink-0">
+                <span class="font-mono text-xs text-zinc-400 font-bold">05/2024 – 05/2025</span>
+                <div class="font-mono text-xs text-zinc-500 mt-1">Caracas, Venezuela</div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-display text-xl font-bold uppercase text-white">Analista de Inventarios</h3>
+                <div class="font-mono text-xs text-zinc-400 font-semibold mb-2">Simax, C.A. (IVOO)</div>
+                <p class="text-sm text-zinc-300 leading-relaxed">
+                  Auditoría continua de entradas, salidas y transferencias inter-sucursales; conciliación de discrepancias en ERP y elaboración de reportes analíticos de KPIs de rotación de inventario.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cargo 3 -->
+          <div class="build-block p-5 rounded-2xl bg-bgCard border border-borderSubtle" data-component="Job_03_JefeAlmacen" data-delay="320">
+            <div class="wire-overlay"><span class="wire-tag">Job_03 • WarehouseLead</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+            <div class="block-content flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div class="sm:w-44 shrink-0">
+                <span class="font-mono text-xs text-zinc-400 font-bold">04/2023 – 04/2024</span>
+                <div class="font-mono text-xs text-zinc-500 mt-1">Caracas, Venezuela</div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-display text-xl font-bold uppercase text-white">Jefe de Almacén</h3>
+                <div class="font-mono text-xs text-zinc-400 font-semibold mb-2">Inversiones Tecnológicas 2025, C.A.</div>
+                <p class="text-sm text-zinc-300 leading-relaxed">
+                  Coordinación general de recepción, custodia y distribución de equipos tecnológicos; rediseño del layout físico del almacén optimizando los tiempos de despacho.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cargos Anteriores Compactos -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="build-block p-4 rounded-xl bg-bgCard/70 border border-borderSubtle" data-component="Job_04_Ventas" data-delay="360">
+              <div class="wire-overlay"><span class="wire-tag">Job_04</span></div>
+              <div class="block-content">
+                <span class="font-mono text-[11px] text-zinc-400">11/2022 – 04/2023</span>
+                <h4 class="font-display text-base font-bold uppercase text-white mt-1">Asesor de Ventas &amp; Soporte Logístico</h4>
+                <p class="text-xs text-zinc-400 mt-1">Inversiones Tecnológicas 2025, C.A.</p>
+              </div>
+            </div>
+
+            <div class="build-block p-4 rounded-xl bg-bgCard/70 border border-borderSubtle" data-component="Job_05_Auditoria" data-delay="400">
+              <div class="wire-overlay"><span class="wire-tag">Job_05</span></div>
+              <div class="block-content">
+                <span class="font-mono text-[11px] text-zinc-400">11/2021 – 08/2022</span>
+                <h4 class="font-display text-base font-bold uppercase text-white mt-1">Analista de Auditoría e Inventarios</h4>
+                <p class="text-xs text-zinc-400 mt-1">Techno Empire Group</p>
+              </div>
+            </div>
+
+            <div class="build-block p-4 rounded-xl bg-bgCard/70 border border-borderSubtle" data-component="Job_06_Coveplast" data-delay="440">
+              <div class="wire-overlay"><span class="wire-tag">Job_06</span></div>
+              <div class="block-content">
+                <span class="font-mono text-[11px] text-zinc-400">05/2018 – 11/2021</span>
+                <h4 class="font-display text-base font-bold uppercase text-white mt-1">Analista Inventarios / Talento Humano</h4>
+                <p class="text-xs text-zinc-400 mt-1">COVEPLAST, S.A. (Miranda)</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Panel Derecho "EN PRODUCCIÓN / EN USO" (4 cols como en el video) -->
+        <div class="lg:col-span-4 build-block p-6 rounded-2xl bg-bgCard border border-borderSubtle flex flex-col justify-between" data-component="InProductionPanel" data-delay="380">
+          <div class="wire-overlay"><span class="wire-tag">InProductionPanel • LiveSystems</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+          <div class="block-content">
+            <span class="font-mono text-xs uppercase tracking-widest text-zinc-400 block mb-2">Sistemas &amp; Herramientas</span>
+            <h3 class="font-anton text-4xl uppercase text-white leading-none mb-6">
+              EN OPERACIÓN.<br/><span class="text-accentRed">EN USO.</span>
+            </h3>
+
+            <div class="space-y-4">
+              <div class="p-3.5 rounded-xl bg-zinc-900/90 border border-borderSubtle">
+                <div class="flex items-center justify-between">
+                  <span class="font-display font-bold text-base uppercase text-white">SISTEMA_CONTROL_IVOO</span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 mt-1">Control Interno Almacén • Apps Script</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-zinc-900/90 border border-borderSubtle">
+                <div class="flex items-center justify-between">
+                  <span class="font-display font-bold text-base uppercase text-white">GTH — IVOO</span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 mt-1">Gestión Humana Interna • Apps Script</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-zinc-900/90 border border-borderSubtle">
+                <div class="flex items-center justify-between">
+                  <span class="font-display font-bold text-base uppercase text-white">SICFI &amp; SIGEFICON</span>
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 mt-1">Facturación PyMEs &amp; Condominios • PHP/SQL</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-zinc-900/90 border border-borderSubtle">
+                <div class="flex items-center justify-between">
+                  <span class="font-display font-bold text-base uppercase text-white">Galletas Oso</span>
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                </div>
+                <p class="text-xs font-mono text-zinc-400 mt-1">Catálogo de Ventas y Pedidos • Apps Script</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-borderSubtle">
+            <div class="text-xs font-mono text-zinc-400">Competencias Clave:</div>
+            <p class="text-xs text-zinc-300 mt-1 leading-relaxed">
+              Auditoría de stock, trazabilidad de mercancía, optimización de layout, ERP Valery/Stellar y automatización de flujos administrativos.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================
+         SECCIÓN 5: CONTACTO ("HABLEMOS DE TU PRÓXIMO SISTEMA")
+         ========================================================= -->
+    <section id="contacto" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-borderSubtle">
+      <div class="build-block rounded-3xl bg-bgCard border border-borderSubtle p-6 sm:p-10 lg:p-12" data-component="ContactSection" data-delay="220">
+        <div class="wire-overlay"><span class="wire-tag">ContactSection • DirectAction</span><div class="wire-handle tl"></div><div class="wire-handle tr"></div><div class="wire-handle bl"></div><div class="wire-handle br"></div></div>
+        <div class="block-content grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          
+          <!-- Izquierda: Datos Directos -->
+          <div class="lg:col-span-6">
+            <span class="font-mono text-xs uppercase tracking-widest text-accentRed block mb-2">// Contacto Directo • Disponibilidad Inmediata</span>
+            <h2 class="font-display text-4xl sm:text-5xl font-bold uppercase tracking-tight text-white leading-none mb-4">
+              CONSTRUYAMOS TU PRÓXIMO SISTEMA.
+            </h2>
+            <p class="text-sm sm:text-base text-zinc-300 leading-relaxed mb-6">
+              ¿Buscas optimizar el control de inventario de tu empresa, automatizar procesos administrativos o desarrollar un sistema web a medida? Contáctame directamente.
+            </p>
+
+            <div class="space-y-3 mb-7">
+              <a href="https://wa.me/584129603589" target="_blank" rel="noopener noreferrer"
+                class="flex items-center gap-3.5 p-3.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-borderSubtle transition-colors">
+                <div class="w-10 h-10 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-lg">
+                  <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-mono text-zinc-400">Teléfonos / WhatsApp</div>
+                  <div class="text-sm font-semibold text-white">0412-9603589 / 0424-2390530</div>
+                </div>
+              </a>
+
+              <a href="mailto:deimerm089@gmail.com"
+                class="flex items-center gap-3.5 p-3.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-borderSubtle transition-colors">
+                <div class="w-10 h-10 rounded-lg bg-accentRed/15 text-accentRed flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-mono text-zinc-400">Correo Electrónico</div>
+                  <div class="text-sm font-semibold text-white">deimerm089@gmail.com</div>
+                </div>
+              </a>
+
+              <div class="flex items-center gap-3.5 p-3.5 rounded-xl bg-zinc-900/90 border border-borderSubtle">
+                <div class="w-10 h-10 rounded-lg bg-wireBlue/15 text-wireBlue flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-mono text-zinc-400">Ubicación</div>
+                  <div class="text-sm font-semibold text-white">Caracas, Distrito Capital, Venezuela</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Derecha: Formulario Interactivo -->
+          <div class="lg:col-span-6">
+            <form id="contact-form" class="p-6 rounded-2xl bg-zinc-950/90 border border-borderSubtle space-y-4">
+              <div class="flex items-center justify-between pb-2 border-b border-borderSubtle">
+                <span class="font-mono text-xs text-zinc-400 uppercase">Enviar Mensaje Rápido</span>
+                <span class="font-mono text-[11px] text-emerald-400">● Online</span>
+              </div>
+
+              <div>
+                <label class="block font-mono text-xs text-zinc-400 mb-1.5">Tu Nombre o Empresa</label>
+                <input type="text" id="sender-name" required placeholder="Ej. Carlos Pérez / Inversiones..."
+                  class="w-full px-4 py-2.5 rounded-xl bg-bgCard border border-borderSubtle focus:border-accentRed focus:outline-none text-sm text-white" />
+              </div>
+
+              <div>
+                <label class="block font-mono text-xs text-zinc-400 mb-1.5">Tipo de Proyecto o Consulta</label>
+                <select id="project-type"
+                  class="w-full px-4 py-2.5 rounded-xl bg-bgCard border border-borderSubtle focus:border-accentRed focus:outline-none text-sm text-white">
+                  <option value="Sistema de Inventario / Almacén">Sistema de Inventario / Control de Almacén</option>
+                  <option value="Desarrollo Web a Medida (PHP/SQL)">Desarrollo Web a Medida (PHP / SQL)</option>
+                  <option value="Automatización con Google Apps Script">Automatización con Google Apps Script</option>
+                  <option value="Oportunidad Laboral / Supervisión Logística">Oportunidad Laboral / Coordinación Logística</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-mono text-xs text-zinc-400 mb-1.5">Cuéntame sobre tu proyecto</label>
+                <textarea id="sender-message" rows="3" required placeholder="Describe brevemente qué proceso deseas sistematizar..."
+                  class="w-full px-4 py-2.5 rounded-xl bg-bgCard border border-borderSubtle focus:border-accentRed focus:outline-none text-sm text-white"></textarea>
+              </div>
+
+              <button type="submit"
+                class="w-full py-3 rounded-xl bg-accentRed hover:bg-accentRedDark text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-accentRed/25 transition-all cursor-pointer">
+                <i class="fa-brands fa-whatsapp text-base"></i>
+                <span>Enviar solicitud por WhatsApp</span>
+              </button>
+
+              <!-- Mensaje de confirmación visual sin alert() -->
+              <div id="form-feedback" class="hidden p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-mono text-center">
+                ¡Listo! Redirigiendo a WhatsApp con los detalles de tu consulta...
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-borderSubtle bg-bgDeep py-8 pb-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
+      <div class="flex items-center gap-2">
+        <span class="font-anton text-base text-white tracking-wider">DM</span>
+        <span>© 2026 Deimer M. Martínez Villaparedes — Todos los derechos reservados.</span>
+      </div>
+      <div>
+        Construido con arquitectura modular • Caracas, Venezuela
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================
+       BARRA FLOTANTE INFERIOR ESTILO FIGMA CANVAS (COMO EN EL VIDEO)
+       ========================================================= -->
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-xl">
+    <div class="px-4 py-2.5 rounded-2xl bg-zinc-900/95 border border-zinc-700/80 backdrop-blur-md shadow-2xl flex items-center justify-between gap-3">
+      
+      <!-- Indicadores de pasos / puntos estilo video -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1" id="step-dots">
+          <span class="w-2 h-2 rounded-full bg-accentRed transition-all"></span>
+          <span class="w-2 h-2 rounded-full bg-accentRed transition-all"></span>
+          <span class="w-2 h-2 rounded-full bg-accentRed transition-all"></span>
+          <span class="w-2 h-2 rounded-full bg-zinc-600 transition-all"></span>
+        </div>
+        <span id="agent-status-text" class="font-mono text-[11px] text-zinc-300 ml-1">
+          18 agentes • UI construida
+        </span>
+      </div>
+
+      <!-- Botón de acción estilo Figma -->
+      <div class="flex items-center gap-2">
+        <button onclick="triggerBuildSequence(true)"
+          class="px-3 py-1 rounded-lg bg-wireBlue hover:bg-blue-500 text-white font-mono text-[11px] font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
+          <i class="fa-solid fa-play text-[9px]"></i>
+          <span>Animar Agentes</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MOTOR DE ANIMACIÓN FIGMA MULTIPLAYER & INTERACTIVIDAD
+       ========================================================= -->
+  <script>
+    /**
+     * Motor de simulación de agentes construyendo la interfaz estilo Figma Multiplayer
+     * Replica el comportamiento visto en el video:
+     * 1. Los cursores nacen en el centro de la pantalla (junto al núcleo rojo).
+     * 2. Vuelan hacia los bloques de la interfaz.
+     * 3. Activan el modo wireframe azul (#3b82f6) con etiquetas técnicas.
+     * 4. Revelan el contenido final con escalonamiento suave.
+     */
+    const AGENTS_CONFIG = [
+      { name: 'UI_Agent', color: '#3b82f6', text: '#ffffff' },
+      { name: 'Dev_PHP', color: '#ff3b1d', text: '#ffffff' },
+      { name: 'Data_SQL', color: '#10b981', text: '#052e16' },
+      { name: 'Sys_Ops', color: '#f59e0b', text: '#1c1917' },
+      { name: 'Layout', color: '#8b5cf6', text: '#ffffff' },
+      { name: 'Script', color: '#06b6d4', text: '#083344' },
+      { name: 'Audit', color: '#ec4899', text: '#ffffff' },
+      { name: 'Grid', color: '#3b82f6', text: '#ffffff' },
+      { name: 'API', color: '#ff3b1d', text: '#ffffff' },
+      { name: 'UX', color: '#10b981', text: '#052e16' },
+      { name: 'ERP', color: '#f59e0b', text: '#1c1917' },
+      { name: 'Core', color: '#6366f1', text: '#ffffff' },
+      { name: 'Render', color: '#3b82f6', text: '#ffffff' },
+      { name: 'State', color: '#ff3b1d', text: '#ffffff' },
+      { name: 'Style', color: '#14b8a6', text: '#042f2e' },
+      { name: 'Build', color: '#f97316', text: '#ffffff' },
+      { name: 'Sync', color: '#3b82f6', text: '#ffffff' },
+      { name: 'Deploy', color: '#ef4444', text: '#ffffff' }
+    ];
+
+    const agentsLayer = document.getElementById('agents-layer');
+    const originCore = document.getElementById('origin-core');
+    const statusText = document.getElementById('agent-status-text');
+    let activeCursors = [];
+    let ambientInterval = null;
+
+    // Crear elementos SVG de cursor estilo Figma
+    function createCursorElement(agent) {
+      const el = document.createElement('div');
+      el.className = 'agent-cursor';
+      el.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.45 0 .67-.53.35-.85L6.35 2.86a.5.5 0 0 0-.85.35Z"
+            fill="${agent.color}" stroke="#ffffff" stroke-width="1.5"/>
+        </svg>
+        <div class="agent-badge" style="background:${agent.color}; color:${agent.text};">
+          ${agent.name}
+        </div>
+      `;
+      return el;
+    }
+
+    // Secuencia principal de construcción estilo video
+    function triggerBuildSequence(scrollToTop = false) {
+      if (scrollToTop) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Limpiar cursores previos
+      agentsLayer.innerHTML = '';
+      activeCursors = [];
+      if (ambientInterval) clearInterval(ambientInterval);
+
+      const blocks = Array.from(document.querySelectorAll('.build-block'));
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+
+      // Mostrar núcleo central rojo
+      originCore.style.opacity = '1';
+      statusText.textContent = '18 agentes • Generando wireframes...';
+
+      // Paso 1: Poner todos los bloques en estado oculto
+      blocks.forEach((block) => {
+        block.classList.remove('state-built', 'state-wireframe');
+        block.classList.add('state-hidden');
+      });
+
+      // Paso 2: Instanciar los cursores en el centro de la pantalla (enjambre inicial)
+      AGENTS_CONFIG.forEach((agent, idx) => {
+        const cursorEl = createCursorElement(agent);
+        const angle = (idx / AGENTS_CONFIG.length) * Math.PI * 2;
+        const radius = 25 + (idx % 3) * 18;
+        const startX = centerX + Math.cos(angle) * radius;
+        const startY = centerY + Math.sin(angle) * radius;
+
+        cursorEl.style.transform = `translate3d(${startX}px, ${startY}px, 0)`;
+        cursorEl.style.opacity = '1';
+        agentsLayer.appendChild(cursorEl);
+        activeCursors.push({ el: cursorEl, x: startX, y: startY });
+      });
+
+      // Paso 3: Dispersar agentes hacia los bloques y activar wireframes azules
+      setTimeout(() => {
+        originCore.style.opacity = '0';
+
+        // Mover cursores hacia bloques visibles en viewport y toda la página
+        activeCursors.forEach((cursor, idx) => {
+          const targetBlock = blocks[idx % blocks.length];
+          const rect = targetBlock.getBoundingClientRect();
+          const targetX = Math.max(20, Math.min(window.innerWidth - 90, rect.left + (rect.width * (0.2 + (idx % 5) * 0.15))));
+          const targetY = Math.max(30, Math.min(window.innerHeight - 40, rect.top + (rect.height * 0.35)));
+
+          cursor.el.style.transition = `transform ${0.65 + (idx % 4) * 0.12}s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease`;
+          cursor.el.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
+        });
+
+        // Fase Wireframe azul (como en el segundo 0:02 y 0:07 del video)
+        blocks.forEach((block, i) => {
+          const delay = parseInt(block.dataset.delay || (i * 60), 10);
+          setTimeout(() => {
+            block.classList.remove('state-hidden');
+            block.classList.add('state-wireframe');
+          }, Math.min(delay, 650));
+        });
+
+        statusText.textContent = '18 agentes • Ensamblando componentes...';
+      }, 480);
+
+      // Paso 4: Revelar el diseño final bloque por bloque
+      setTimeout(() => {
+        blocks.forEach((block, i) => {
+          const delay = parseInt(block.dataset.delay || (i * 70), 10);
+          setTimeout(() => {
+            block.classList.remove('state-wireframe');
+            block.classList.add('state-built');
+          }, Math.min(delay * 1.15, 950));
+        });
+      }, 1150);
+
+      // Paso 5: Dejar 5 agentes flotando sutilmente en modo colaborativo y desvanecer el resto
+      setTimeout(() => {
+        activeCursors.forEach((cursor, idx) => {
+          if (idx > 4) {
+            cursor.el.style.opacity = '0';
+          } else {
+            cursor.el.style.opacity = '0.75';
+          }
+        });
+        statusText.textContent = '18 agentes • Portafolio listo';
+        startAmbientAgents();
+      }, 2400);
+    }
+
+    // Movimiento ambiental sutil de los agentes activos (como cursores vivos en Figma)
+    function startAmbientAgents() {
+      ambientInterval = setInterval(() => {
+        activeCursors.slice(0, 5).forEach((cursor, idx) => {
+          const rx = Math.random() * (window.innerWidth - 120) + 40;
+          const ry = Math.random() * (window.innerHeight - 120) + 60;
+          cursor.el.style.transition = `transform ${2.5 + idx * 0.4}s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease`;
+          cursor.el.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
+        });
+      }, 3200);
+    }
+
+    // Filtros interactivos de proyectos con efecto wireframe rápido al filtrar
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const projectCards = document.querySelectorAll('.project-card');
+
+    filterButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        // Actualizar estado visual de botones
+        filterButtons.forEach((b) => {
+          b.classList.remove('bg-accentRed', 'text-white', 'font-semibold');
+          b.classList.add('bg-bgCard', 'border', 'border-borderSubtle', 'text-zinc-400');
+        });
+        btn.classList.remove('bg-bgCard', 'border', 'border-borderSubtle', 'text-zinc-400');
+        btn.classList.add('bg-accentRed', 'text-white', 'font-semibold');
+
+        const filter = btn.dataset.filter;
+
+        projectCards.forEach((card) => {
+          const matches = filter === 'all' || card.dataset.category === filter;
+          if (matches) {
+            card.style.display = 'flex';
+            card.classList.remove('state-built');
+            card.classList.add('state-wireframe');
+            setTimeout(() => {
+              card.classList.remove('state-wireframe');
+              card.classList.add('state-built');
+            }, 320);
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Formulario de contacto con redirección directa a WhatsApp
+    const contactForm = document.getElementById('contact-form');
+    const formFeedback = document.getElementById('form-feedback');
+
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('sender-name').value.trim();
+      const type = document.getElementById('project-type').value;
+      const msg = document.getElementById('sender-message').value.trim();
+
+      const whatsappText = encodeURIComponent(
+        `Hola Deimer, te contacto desde tu Portafolio Web.\n\n` +
+        `*Nombre/Empresa:* ${name}\n` +
+        `*Interés:* ${type}\n` +
+        `*Mensaje:* ${msg}`
+      );
+
+      formFeedback.classList.remove('hidden');
+      setTimeout(() => {
+        window.open(`https://wa.me/584129603589?text=${whatsappText}`, '_blank');
+      }, 600);
+    });
+
+    // Iniciar la animación automáticamente al cargar la página
+    window.addEventListener('load', () => {
+      triggerBuildSequence(false);
+    });
+  </script>
+</body>
+</html>
